@@ -15,25 +15,34 @@ UOpenDoor::UOpenDoor()
 	// ...
 }
 
-
 // Called when the game starts
 void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AActor* Owner = GetOwner(); //pointer na ownera kao AActor, njegovu nadklasu
-	FRotator NewRotation = FRotator(0.f, -60.f, 0.f); //floutingpoiiiiiint
-	//FRotator prima pitch (kao pedala), yaw (kao vrata), i roll (kao volan)
-	//svaka cast samom sebi za objasnjenje^
-	Owner->SetActorRotation(NewRotation);
+	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 
+void UOpenDoor::OpenDoor()
+{
+	AActor* Owner = GetOwner(); //pointer na ownera kao AActor, njegovu nadklasu
+	FRotator NewRotation = FRotator(0.f, -60.f, 0.f); //floutingpoiiiiiint
+													  //FRotator prima pitch (kao pedala), yaw (kao vrata), i roll (kao volan)
+													  //svaka cast samom sebi za objasnjenje^
+	Owner->SetActorRotation(NewRotation);
+}
 
 // Called every frame
 void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
-	// ...
+	//izvrsava se svakog frejma
+	// ako je (AActor) ActorThatOpens unutar (TriggerVolume) PressurePlate (overlapuju se), pozovi OpenDoor
+	if(IsValid(PressurePlate) && IsValid(ActorThatOpens)) //NECE BEZ OVO DA RADI, NE ZNAM ZASTO, CRASHUJE EDITOR
+	if (PressurePlate->IsOverlappingActor(ActorThatOpens))
+	{
+		OpenDoor();
+	}
+
 }
 
