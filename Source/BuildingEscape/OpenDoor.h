@@ -21,6 +21,12 @@ public:
 	// Called every frame
 	virtual void TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction ) override;
 
-		
+private:
+	//da bi se prikazalo u UE4, stavi se UPROPERTY iznad
+	UPROPERTY(VisibleAnywhere)
+	float OpenAngle = 90.0f;
+
+	UPROPERTY(EditAnywhere)
+	ATriggerVolume* PressurePlate;	
 	
 };
