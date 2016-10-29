@@ -20,15 +20,21 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
+	Owner = GetOwner(); //pointer na ownera kao AActor, njegovu nadklasu
+	//nub, bio sam duplo deklarisao Owner, vec ga imam u .h fajl, sad radi
 }
 
 void UOpenDoor::OpenDoor()
 {
-	AActor* Owner = GetOwner(); //pointer na ownera kao AActor, njegovu nadklasu
-	FRotator NewRotation = FRotator(0.f, -60.f, 0.f); //floutingpoiiiiiint
+	FRotator NewRotation = FRotator(0.f, OpenAngle, 0.f); //floutingpoiiiiiint (OpenAngle definisan u .h)
 													  //FRotator prima pitch (kao pedala), yaw (kao vrata), i roll (kao volan)
 													  //svaka cast samom sebi za objasnjenje^
 	Owner->SetActorRotation(NewRotation);
+}
+
+void UOpenDoor::CloseDoor()
+{
+	Owner->SetActorRotation(FRotator(0.f, 0.f, 0.f)); //skraceno, ostavio sam celo gore u OpenDoor
 }
 
 // Called every frame
@@ -42,7 +48,14 @@ void UOpenDoor::TickComponent( float DeltaTime, ELevelTick TickType, FActorCompo
 	if (PressurePlate->IsOverlappingActor(ActorThatOpens))
 	{
 		OpenDoor();
+		LastDoorOpenTime = GetWorld()->GetTimeSeconds(); //pamti vreme kad su otvorena vrata
 	}
+
+	if (GetWorld()->GetTimeSeconds() - LastDoorOpenTime > DoorCloseDelay)
+	{
+		CloseDoor();
+	}
+	
 
 }
 
