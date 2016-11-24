@@ -24,6 +24,14 @@ public:
 private:
 	// How far ahead of the player can we reach
 	float Reach = 100.f;
-		
+
+	UPhysicsHandleComponent* PhysicsHandle = nullptr; // nullpointer za sad
+	UInputComponent* InputComponent = nullptr;
 	
+	void Grab();
+	void Release();
+	void FindPhysicsHandleComponent();
+	void SetupInputComponent();
+	void DrawRedLine(FVector PVPLocation, FVector LineTraceEnd);
+	const FHitResult GetFirstPhysicsBodyInReach();
 };
