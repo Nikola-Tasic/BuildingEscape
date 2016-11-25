@@ -32,6 +32,10 @@ private:
 	void Release();
 	void FindPhysicsHandleComponent();
 	void SetupInputComponent();
-	void DrawRedLine(FVector PVPLocation, FVector LineTraceEnd);
+	void DrawRedLine();
+
+	FVector GetReachLineStart();
+	FVector GetReachLineEnd();
+
 	const FHitResult GetFirstPhysicsBodyInReach();
 };

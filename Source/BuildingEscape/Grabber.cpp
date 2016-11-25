@@ -47,12 +47,12 @@ void UGrabber::SetupInputComponent()
 }
 
 // Nacrtaj crvenu liniju koja pokazuje gde actor gleda
-void UGrabber::DrawRedLine(FVector PVPLocation, FVector LineTraceEnd)
+void UGrabber::DrawRedLine()
 {
 	DrawDebugLine(
 		GetWorld(),
-		PVPLocation,
-		LineTraceEnd,
+		GetReachLineStart(),
+		GetReachLineEnd(),
 		FColor(255, 0, 0),
 		false, // no persist, brisi slobodno
 		0.f, // bez persist mu ne treba ni life time
@@ -89,56 +89,61 @@ void UGrabber::Release()
 	PhysicsHandle->ReleaseComponent();
 }
 
-
 // Called every frame
 void UGrabber::TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction )
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
-	FVector PVPLocation;
-	FRotator PVPRotation;
-	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PVPLocation, OUT PVPRotation);
-	FVector LineTraceEnd = PVPLocation + PVPRotation.Vector() * Reach;
-
 	// Ako je dodat physics handle, pomeri objekat
 	if (PhysicsHandle->GrabbedComponent)
 	{
-		PhysicsHandle->SetTargetLocation(LineTraceEnd);
+		PhysicsHandle->SetTargetLocation(GetReachLineEnd());
 	}
-
 }
 
 // Vraca hit za prvi objekat koji moze da uhvati
 const FHitResult UGrabber::GetFirstPhysicsBodyInReach()
+{
+	//LineTrace (Ray-Cast). ObjectType je PhysicsBody, WorldStatic itd.
+	FHitResult HitResult;
+	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner()); //GetOwner da mi ignorisalo koliziju sa samim sobom
+
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT HitResult,
+		GetReachLineStart(),
+		GetReachLineEnd(),
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), //gledaj samo PhysicsBody
+		TraceParameters
+	);
+
+	AActor* HitActor = HitResult.GetActor();
+	if (HitActor) //za svaki slucaj, da ne crashuje
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Line trace hi %s"), *(HitActor->GetName()));
+	}
+
+	return HitResult;
+}
+
+// Vraca pocetak linije koja proverava da li moze da se uhvati objekat
+FVector UGrabber::GetReachLineStart()
+{
+	FVector PVPLocation;
+	FRotator PVPRotation;
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PVPLocation, OUT PVPRotation);
+
+	return PVPLocation;
+}
+
+// Vraca kraj linije koja proverava da li moze da se uhvati objekat
+FVector UGrabber::GetReachLineEnd()
 {
 	FVector PVPLocation;
 	FRotator PVPRotation;
 
 	// OVAJ RETARDIRANI GETER USTVARI NE GETUJE NIŠTA JER JE VOID, I USTVARI POSTAVLJA VREDNOST PROSLEÐENIM PARAMETRIMA
 	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(OUT PVPLocation, OUT PVPRotation);
+	///UE_LOG(LogTemp, Warning, TEXT("Location: %s, Position: %s"), *PVPLocation.ToString(), *PVPRotation.ToString()) //macro je, ne mora ; 
 
-	//UE_LOG(LogTemp, Warning, TEXT("Location: %s, Position: %s"), *PVPLocation.ToString(), *PVPRotation.ToString()) //macro je, ne mora ; 
-
-	FVector LineTraceEnd = PVPLocation + PVPRotation.Vector() * Reach;
-
-	//LineTrace (Ray-Cast). ObjectType je PhysicsBody, WorldStatic itd.
-
-	FHitResult Hit;
-	FCollisionQueryParams TraceParameters(FName(TEXT("")), false, GetOwner()); //GetOwner da mi ignorisalo koliziju sa samim sobom
-
-	GetWorld()->LineTraceSingleByObjectType(
-		OUT Hit,
-		PVPLocation,
-		LineTraceEnd,
-		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody), //gledaj samo PhysicsBody
-		TraceParameters
-	);
-
-	AActor* HitActor = Hit.GetActor();
-	if (HitActor) //za svaki slucaj, da ne crashuje
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Line trace hi %s"), *(HitActor->GetName()));
-	}
-
-	return Hit;
+	return PVPLocation + PVPRotation.Vector() * Reach;
 }
